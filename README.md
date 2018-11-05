@@ -44,6 +44,7 @@ https://github.com/wangdahoo/vue-scroller-demo
 |-----|-----|-----|-----|
 | onRefresh | pull to refresh callback | N | - |
 | onInfinite | infinite loading callback | N | - |
+| onEndTouch | sroll end callback with offset top value | N | - |
 | refreshText | tips of `pull-to-refresh` | N | 下拉刷新 |
 | noDataText | tips of `no-more-data` when `infinite-loading` finished | N | 没有更多数据 |
 | width | scroller container width | N | `100%` |
@@ -64,3 +65,7 @@ https://github.com/wangdahoo/vue-scroller-demo
 - `scrollTo(x:Integer, y:Integer, animate:Boolean)` scroll to a position in scroller content
 - `scrollBy(x:Integer, y:Integer, animate:Boolean)` scroll by a position in scroller content
 - `getPosition :Object` get current position of scroller content
+
+#### 改动点：
+- onRefresh： 触发条件改为在执行状态不会再次触发回调方法，防止远程拉去数据时，服务端还未返回又向服务器发起第二次请求
+- 新增接口 onEndTouch：用户滚动完毕后触发，回调值为当前距离顶部的像素值

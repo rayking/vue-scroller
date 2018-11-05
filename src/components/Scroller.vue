@@ -34,7 +34,7 @@
         </span>
 
         <div class="no-data-text"
-          :class="{'active': !showLoading && loadingState == 2}" :style="{color: loadingLayerColor}" 
+          :class="{'active': !showLoading && loadingState == 2}" :style="{color: loadingLayerColor}"
           v-text="noDataText">
         </div>
       </div>
@@ -161,6 +161,7 @@
   }
 </style>
 <script>
+/* eslint-disable */
   import Scroller from '../module/core'
   import getContentRender from '../module/render'
   import Spinner from './Spinner.vue'
@@ -172,11 +173,9 @@
     if (v[v.length - 1] != '%') return v + 'px'
     return v
   }
-
   const widthAndHeightValidator = (v) => {
     return re.test(v)
   }
-
   export default {
     components: {
       Spinner,
@@ -186,7 +185,7 @@
     props: {
       onRefresh: Function,
       onInfinite: Function,
-
+      onEndTouch: Function,
       refreshText: {
         type: String,
         default: '下拉刷新'
@@ -267,7 +266,7 @@
       },
 
       showInfiniteLayer () {
-        let contentHeight = 0 
+        let contentHeight = 0
         this.content
           ? contentHeight = this.content.offsetHeight
           : void 666
@@ -293,7 +292,8 @@
         pullToRefreshLayer: undefined,
         mousedown: false,
         infiniteTimer: undefined,
-        resizeTimer: undefined
+        resizeTimer: undefined,
+        inviewTimer:undefined
       }
     },
 
@@ -327,7 +327,7 @@
         }, () => {
           this.state = 0
         }, () => {
-          this.state = 2
+
 
           this.$on('$finishPullToRefresh', () => {
             setTimeout(() => {
@@ -335,8 +335,8 @@
               this.finishPullToRefresh()
             })
           })
-
-          this.onRefresh(this.finishPullToRefresh)
+          if(this.state !== 2) this.onRefresh(this.finishPullToRefresh)
+          this.state = 2
         })
       }
 
@@ -345,8 +345,8 @@
         this.infiniteTimer = setInterval(() => {
           let {left, top, zoom} = this.scroller.getValues()
 
-          // 在 keep alive 中 deactivated 的组件长宽变为 0 
-          if (this.content.offsetHeight > 0 && 
+          // 在 keep alive 中 deactivated 的组件长宽变为 0
+          if (this.content.offsetHeight > 0 &&
             top + 60 > this.content.offsetHeight - this.container.clientHeight) {
             if (this.loadingState) return
             this.loadingState = 1
@@ -375,7 +375,7 @@
       }
 
       let { content_width, content_height } = contentSize()
-      
+
       this.resizeTimer = setInterval(() => {
         let {width, height} = contentSize()
         if (width !== content_width || height !== content_height) {
@@ -438,6 +438,7 @@
 
       touchEnd(e) {
         this.scroller.doTouchEnd(e.timeStamp)
+        this.handleTouchEnd(e)
       },
 
       mouseDown(e) {
@@ -469,6 +470,7 @@
         }
         this.scroller.doTouchEnd(e.timeStamp)
         this.mousedown = false
+        this.handleTouchEnd(e)
       },
 
       // 获取位置
@@ -492,6 +494,16 @@
           }, 1000)
         } else {
           this.loadingState = 0
+        }
+      },
+
+      // 每次动作完毕,触发事件
+      handleTouchEnd(e) {
+        if(this.onEndTouch){
+          this.inviewTimer = setTimeout(()=>{
+            this.onEndTouch(this.getPosition().top)
+            clearTimeout(this.inviewTimer)
+          },200)
         }
       }
     }
